@@ -291,6 +291,12 @@ export default class RealTimeScale extends TimeScale {
     super.init(scaleOpts, opts);
     startDataRefreshTimer(me.$realtime, () => {
       const chart = me.chart;
+      
+      // Check if chart is still valid (not destroyed)
+      if (!chart || !chart.ctx) {
+        return resolveOption(me, 'refresh');
+      }
+      
       const onRefresh = resolveOption(me, 'onRefresh');
 
       call(onRefresh, [chart], me);
@@ -315,6 +321,12 @@ export default class RealTimeScale extends TimeScale {
       }
       startFrameRefreshTimer(realtime, () => {
         const chart = me.chart;
+        
+        // Check if chart is still valid (not destroyed)
+        if (!chart || !chart.ctx) {
+          return resolveOption(me, 'frameRate');
+        }
+        
         const streaming = chart.$streaming;
 
         scroll(me);

@@ -14,7 +14,6 @@ export type RealTimeScaleOptions = TimeScaleOptions & {
   realtime: Options;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface RealTimeScale<O extends RealTimeScaleOptions = RealTimeScaleOptions> extends TimeScale<O> {}
 
 export const RealTimeScale: ChartComponent & {
@@ -29,7 +28,6 @@ declare module 'chart.js' {
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   interface PluginOptionsByType<TType extends ChartType> {
     /**
      * Per chart streaming plugin options.
