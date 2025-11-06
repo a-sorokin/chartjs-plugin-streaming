@@ -42,7 +42,7 @@ module.exports = {
     ['@simonbrunel/vuepress-plugin-versions', {
       filters: {
         suffix: (tag) => tag ? ` (${tag})` : '',
-        title: (v, vars) => window.location.href.includes('master') ? 'Development (master)' : v + (vars.tag ? ` (${tag})` : ''),
+        title: (v, vars) => window.location.href.includes('master') ? 'Development (master)' : v + (vars.tag ? ` (${vars.tag})` : ''),
         link: (v, vars) => vars.prerelease ? 'next' : v
       },
       menu: {

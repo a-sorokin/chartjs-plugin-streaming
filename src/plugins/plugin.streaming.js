@@ -22,12 +22,15 @@ function update(mode) {
 
   if (mode === 'quiet') {
     each(me.data.datasets, (dataset, datasetIndex) => {
-      const controller = me.getDatasetMeta(datasetIndex).controller;
+      const meta = me.getDatasetMeta(datasetIndex);
+      const controller = meta && meta.controller;
 
-      // Set transition mode to 'quiet'
-      controller._setStyle = function(element, index, _mode, active) {
-        DatasetController.prototype._setStyle.call(this, element, index, 'quiet', active);
-      };
+      if (controller) {
+        // Set transition mode to 'quiet'
+        controller._setStyle = function(element, index, _mode, active) {
+          DatasetController.prototype._setStyle.call(this, element, index, 'quiet', active);
+        };
+      }
     });
   }
 
@@ -35,7 +38,12 @@ function update(mode) {
 
   if (mode === 'quiet') {
     each(me.data.datasets, (dataset, datasetIndex) => {
-      delete me.getDatasetMeta(datasetIndex).controller._setStyle;
+      const meta = me.getDatasetMeta(datasetIndex);
+      const controller = meta && meta.controller;
+
+      if (controller && controller._setStyle) {
+        delete controller._setStyle;
+      }
     });
   }
 }
@@ -43,12 +51,17 @@ function update(mode) {
 function render(chart) {
   const streaming = chart.$streaming;
 
+  // Check if chart is still valid (not destroyed)
+  if (!chart.ctx) {
+    return;
+  }
+
   chart.render();
 
   if (streaming.lastMouseEvent) {
     setTimeout(() => {
       const lastMouseEvent = streaming.lastMouseEvent;
-      if (lastMouseEvent) {
+      if (lastMouseEvent && chart.ctx) {
         chart._eventHandler(lastMouseEvent);
       }
     }, 0);
@@ -100,14 +113,14 @@ export default {
     try {
       const plugin = registry.getPlugin('annotation');
       annotationAttachChart(plugin, chart);
-    } catch (e) {
+    } catch {
       annotationDetachChart(chart);
     }
 
     try {
       const plugin = registry.getPlugin('zoom');
       zoomAttachChart(plugin, chart);
-    } catch (e) {
+    } catch {
       zoomDetachChart(chart);
     }
   },
@@ -119,7 +132,7 @@ export default {
       const {controller, $animations} = meta;
 
       // Skip updating element options if show/hide transition is active
-      if ($animations && $animations.visible && $animations.visible._active) {
+      if (controller && $animations && $animations.visible && $animations.visible._active) {
         controller.updateElement = noop;
         controller.updateSharedOptions = noop;
       }
@@ -137,7 +150,7 @@ export default {
       element.$streaming = getAxisMap(element, transitionKeys, meta);
     }
 
-    if (mode === 'quiet') {
+    if (mode === 'quiet' && controller) {
       delete controller.updateElement;
       delete controller.updateSharedOptions;
     }
@@ -145,6 +158,12 @@ export default {
 
   beforeDatasetDraw(chart, args) {
     const {ctx, chartArea, width, height} = chart;
+    
+    // Skip if ctx is null (chart is being destroyed)
+    if (!ctx) {
+      return;
+    }
+    
     const {xAxisID, yAxisID, controller} = args.meta;
     const area = {
       left: 0,
@@ -153,19 +172,24 @@ export default {
       bottom: height
     };
 
-    if (xAxisID && controller.getScaleForId(xAxisID) instanceof RealTimeScale) {
-      area.left = chartArea.left;
-      area.right = chartArea.right;
-    }
-    if (yAxisID && controller.getScaleForId(yAxisID) instanceof RealTimeScale) {
-      area.top = chartArea.top;
-      area.bottom = chartArea.bottom;
+    if (controller) {
+      if (xAxisID && controller.getScaleForId(xAxisID) instanceof RealTimeScale) {
+        area.left = chartArea.left;
+        area.right = chartArea.right;
+      }
+      if (yAxisID && controller.getScaleForId(yAxisID) instanceof RealTimeScale) {
+        area.top = chartArea.top;
+        area.bottom = chartArea.bottom;
+      }
     }
     clipArea(ctx, area);
   },
 
   afterDatasetDraw(chart) {
-    unclipArea(chart.ctx);
+    // Skip if ctx is null (chart is being destroyed)
+    if (chart.ctx) {
+      unclipArea(chart.ctx);
+    }
   },
 
   beforeEvent(chart, args) {

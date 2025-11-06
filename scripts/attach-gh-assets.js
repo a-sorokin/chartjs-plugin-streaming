@@ -1,5 +1,3 @@
-/* eslint-disable no-process-exit */
-
 const {run} = require('./utils');
 const pkg = require('../package.json');
 
