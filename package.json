@@ -43,7 +43,8 @@
     "lint-md": "eslint \"**/*.md\"",
     "lint-types": "eslint \"types/**/*.ts\"",
     "lint": "concurrently \"npm:lint-*\"",
-    "package": "npm run build && node scripts/create-packages"
+    "package": "npm run build && node scripts/create-packages",
+    "prepare": "npm run build"
   },
   "dependencies": {
     "chart.js": "^4.5.1",
